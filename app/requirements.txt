@@ -1,0 +1,11 @@
+fastapi
+uvicorn 
+sqlmodel 
+psycopg2 
+python-jose 
+passlib[bcrypt] 
+python-multipart 
+alembic 
+tzdata
+sqlmodel
+SQLMOdel

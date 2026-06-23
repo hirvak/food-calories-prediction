@@ -1,0 +1,31 @@
+# Virtual Environment
+venv/
+
+# Environment Variables
+app/.env
+.env
+
+# Python Cache
+__pycache__/
+*.pyc
+
+# VS Code
+.vscode/
+
+# Logs
+*.log
+
+# Jupyter
+.ipynb_checkpoints/
+
+# Large folders
+Backup/
+Datasets/
+Notebook/
+Results/
+
+# OS files
+.DS_Store
+Thumbs.db
+
+Models/
