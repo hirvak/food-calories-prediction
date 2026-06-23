@@ -4,6 +4,8 @@ from sqlalchemy import engine_from_config
 from sqlalchemy import pool
 from sqlmodel import SQLModel
 from Users.models import User
+from Nutrition.models import Nutrition
+from Prediction.models import Prediction
 from alembic import context
 
 # this is the Alembic Config object, which provides

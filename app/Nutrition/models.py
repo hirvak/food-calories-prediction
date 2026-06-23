@@ -7,5 +7,7 @@ class Nutrition(SQLModel, table=True):
     food_name: str = Field(index=True, unique=True)
     calories_per_100g: float
     protein: float
-    carbs: float
     fat: float
+    carbohydrates: float
+    fiber: float
+    sugar: float
