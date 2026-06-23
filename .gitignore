@@ -28,4 +28,7 @@ Results/
 .DS_Store
 Thumbs.db
 
+# YOLO Models
+*.pt
+app/models/
 Models/
