@@ -1,7 +1,8 @@
 from sqlmodel import Session, select
 from Prediction.models import Prediction
-from datetime import datetime, date
+from datetime import datetime, date,timedelta
 from sqlmodel import select
+from collections import Counter
 
 def save_prediction(prediction: Prediction,session: Session):
     session.add(prediction)
@@ -24,4 +25,31 @@ def get_today_predictions(user_id: int,session: Session):
     return [p for p in predictions
         if p.created_at.date() == today]
 
+def get_weekly_predictions(user_id: int,session: Session):
+    one_week_ago = datetime.utcnow() - timedelta(days=7)
+    statement = (select(Prediction).where(Prediction.user_id == user_id).where(Prediction.created_at >= one_week_ago))
+    return session.exec(statement).all()
 
+def get_monthly_predictions(user_id: int,session: Session):
+    now = datetime.utcnow()
+    statement = (select(Prediction).where(Prediction.user_id == user_id))
+    predictions = session.exec(statement).all()
+    return [p for p in predictions if p.created_at.year == now.year and p.created_at.month == now.month]
+
+
+def get_top_foods(user_id: int,session: Session):
+    statement = select(Prediction).where(Prediction.user_id == user_id)
+    predictions = session.exec(statement).all()
+    food_counter = Counter(prediction.food_name for prediction in predictions)
+    top_foods = [
+        {"food_name": food,"count": count}
+        for food, count in food_counter.most_common(5)]
+    return top_foods
+
+def delete_prediction(prediction_id: int,session: Session):
+    prediction = session.get(Prediction,prediction_id)
+    if prediction is None:
+        return None
+    session.delete(prediction)
+    session.commit()
+    return prediction

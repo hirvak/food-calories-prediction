@@ -1,9 +1,9 @@
 from fastapi import FastAPI
 from sqlmodel import SQLModel
 from Utils.utils import engine
-from Auth.auth import router as auth_router
-from Prediction.prediction import router as prediction_router
-from Users.users import router as user_router
+from Auth.api import router as auth_router
+from Prediction.api import router as prediction_router
+from Users.api import router as user_router
 
 app = FastAPI()
 
