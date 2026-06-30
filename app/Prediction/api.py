@@ -1,4 +1,4 @@
-from fastapi import APIRouter, UploadFile, File, Form
+from fastapi import APIRouter, UploadFile, File, Form,Query
 from Nutrition.controller import get_nutrition_by_food
 from ML.model_loader import model
 from sqlmodel import Session
@@ -7,7 +7,7 @@ from Utils.utils import get_session
 from Security.security import get_current_user
 from Prediction.models import Prediction
 from fastapi import HTTPException
-from Prediction.controller import get_user_predictions,get_all_predictions,save_prediction,get_today_predictions,get_weekly_predictions,get_monthly_predictions,get_top_foods,delete_prediction
+from Prediction.controller import get_user_predictions,get_all_predictions,save_prediction,get_today_predictions,get_weekly_predictions,get_monthly_predictions,get_top_foods,delete_prediction,get_user_predictions_paginated,get_all_predictions_paginated
 from fastapi import HTTPException
 from PIL import Image
 
@@ -64,26 +64,20 @@ async def predict_food(image: UploadFile = File(...),weight: float = Form(...),s
     }
 
 @router.get("/history")
-def prediction_history(session: Session = Depends(get_session),current_user = Depends(get_current_user)):
+def prediction_history(page: int = Query(1, ge=1),limit: int = Query(10, ge=1, le=100),session: Session = Depends(get_session),current_user = Depends(get_current_user)):
 
-    predictions = get_user_predictions(current_user.id,session)
+    predictions, total_records = get_user_predictions_paginated(current_user.id,page,limit,session)
     return {
-        "user": {
-            "id": current_user.id,
-            "name": current_user.name,
-            "email": current_user.email,
-            "role": current_user.role
-        },
-        "predictions": predictions
-    }
+        "user": {"id": current_user.id,"name": current_user.name,"email": current_user.email,"role": current_user.role},
+        "page": page,"limit": limit,"total_records": total_records,"total_pages": (total_records + limit - 1) // limit,"predictions": predictions}
 
 @router.get("/all-history")
-def all_prediction_history(session: Session = Depends(get_session),current_user = Depends(get_current_user)):
-
+def all_prediction_history(page: int = Query(1, ge=1),limit: int = Query(10, ge=1, le=100),session: Session = Depends(get_session),current_user = Depends(get_current_user)):
     if current_user.role != "admin":
         raise HTTPException(status_code=403,detail="Only admin can access this endpoint")
-    predictions = get_all_predictions(session)
-    return predictions
+    predictions, total_records = get_all_predictions_paginated(page,limit,session)
+    return {
+        "page": page,"limit": limit,"total_records": total_records,"total_pages": (total_records + limit - 1) // limit,"predictions": predictions}
 
 @router.get("/today-summary")
 def today_summary(session: Session = Depends(get_session),current_user = Depends(get_current_user)):
@@ -160,5 +154,4 @@ def remove_prediction(prediction_id: int,session: Session = Depends(get_session)
         raise HTTPException(status_code=403,detail="You are not authorized to delete this prediction")
 
     delete_prediction(prediction_id,session)
-
     return {"message": "Prediction deleted successfully"}

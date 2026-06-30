@@ -53,3 +53,17 @@ def delete_prediction(prediction_id: int,session: Session):
     session.delete(prediction)
     session.commit()
     return prediction
+
+def get_user_predictions_paginated(user_id: int,page: int,limit: int,session: Session):
+
+    offset = (page - 1) * limit
+    total_records = len(session.exec(select(Prediction).where(Prediction.user_id == user_id)).all())
+    predictions = session.exec(select(Prediction).where(Prediction.user_id == user_id).offset(offset).limit(limit)).all()
+
+    return predictions, total_records
+
+def get_all_predictions_paginated(page: int,limit: int,session: Session):
+    offset = (page - 1) * limit
+    total_records = len(session.exec(select(Prediction)).all())
+    predictions = session.exec(select(Prediction).offset(offset).limit(limit)).all()
+    return predictions, total_records
