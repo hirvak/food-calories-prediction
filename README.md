@@ -1,6 +1,16 @@
 # Food Calories Prediction System
 
-An AI-powered Food Calories Prediction System built using **FastAPI**, **YOLOv8**, and **PostgreSQL**. The application detects food items from an uploaded image, calculates nutritional values based on the user-provided weight, stores prediction history, and provides nutrition analytics for users and administrators.
+An AI-powered **Food Calories Prediction System** built using **FastAPI**, **YOLOv8**, and **PostgreSQL**. The application detects food items from an uploaded image, calculates nutritional values based on the user-provided weight, stores prediction history, and provides nutrition analytics for users and administrators.
+
+---
+
+# Project Objectives
+
+- Detect food items using the YOLOv8 deep learning model.
+- Calculate nutritional values based on food weight.
+- Store prediction history in PostgreSQL.
+- Provide nutrition summaries and analytics.
+- Implement secure JWT Authentication with Role-Based Access Control.
 
 ---
 
@@ -8,64 +18,85 @@ An AI-powered Food Calories Prediction System built using **FastAPI**, **YOLOv8*
 
 ## 1. Authentication
 
-* User Registration
-* User Login using JWT Authentication
-* Get Logged-in User Details
-* Role-Based Authorization (User & Admin)
+- User Registration
+- User Login using JWT Authentication
+- Get Logged-in User Details
+- Update User Profile
+- Change Password
+- Role-Based Authorization (User & Admin)
 
 ---
 
 ## 2. AI Food Prediction
 
-* Upload Food Image
-* Food Detection using YOLOv8
-* Confidence Score
-* Weight-Based Nutrition Calculation
-* Save Prediction History
+- Upload Food Image
+- Food Detection using YOLOv8
+- Confidence Score
+- Weight-Based Nutrition Calculation
+- Save Prediction History
 
 ---
 
 ## 3. User Features
 
-* View User Profile
-* View Prediction History
-* Delete Prediction
-* Today's Nutrition Summary
-* Weekly Nutrition Summary
-* Monthly Nutrition Summary
-* Top Consumed Foods
+- View User Profile
+- Update User Profile
+- Change Password
+- View Prediction History
+- Delete Prediction
+- Prediction History Pagination
+- Today's Nutrition Summary
+- Weekly Nutrition Summary
+- Monthly Nutrition Summary
+- Top Consumed Foods
 
 ---
 
 ## 4. Admin Features
 
-* View All Prediction History
-* Admin Dashboard
-* Total Users
-* Total Predictions
-* Total Calories Consumed
-* Most Frequently Detected Food
+- Admin Dashboard
+- View All Users
+- Delete User
+- View All Prediction History
+- User Pagination
+- Total Users
+- Total Predictions
+- Total Calories Consumed
+- Most Frequently Detected Food
 
 ---
 
-# 5. Tech Stack
+# Tech Stack
 
-| Technology           | Purpose                      |
-| -------------------- | ---------------------------- |
-| FastAPI              | Backend Framework            |
-| PostgreSQL           | Database                     |
-| SQLModel             | ORM                          |
-| Alembic              | Database Migration           |
-| JWT                  | Authentication               |
-| Passlib              | Password Hashing             |
-| YOLOv8 (Ultralytics) | Food Detection               |
-| Pillow               | Image Processing             |
-| Pandas               | Nutrition Dataset Processing |
-| Python               | Programming Language         |
+| Technology | Purpose |
+|------------|---------|
+| FastAPI | Backend Framework |
+| PostgreSQL | Database |
+| SQLModel | ORM |
+| Alembic | Database Migration |
+| JWT | Authentication |
+| Passlib | Password Hashing |
+| YOLOv8 (Ultralytics) | Food Detection |
+| Pillow | Image Processing |
+| Pandas | Nutrition Dataset Processing |
+| Python | Programming Language |
 
 ---
 
-# 6. Project Structure
+# Backend Highlights
+
+- RESTful API
+- JWT Authentication
+- Password Hashing
+- Role-Based Access Control
+- SQLModel ORM
+- Alembic Database Migration
+- Pagination Support
+- PostgreSQL Integration
+
+---
+
+# Project Structure
 
 ```text
 Food_Calories_Project/
@@ -91,51 +122,52 @@ Food_Calories_Project/
 
 ---
 
-# 7. Database Tables
+# Database Tables
 
 ## User
 
-* id
-* name
-* email
-* hashed_password
-* role
-* created_at
+- id
+- name
+- email
+- hashed_password
+- role
+- is_active
+- created_at
 
 ---
 
 ## Nutrition
 
-* id
-* food_name
-* calories_per_100g
-* protein
-* fat
-* carbohydrates
-* fiber
-* sugar
+- id
+- food_name
+- calories_per_100g
+- protein
+- fat
+- carbohydrates
+- fiber
+- sugar
 
 ---
 
 ## Prediction
 
-* id
-* user_id
-* food_name
-* weight_grams
-* calories
-* protein
-* fat
-* carbohydrates
-* fiber
-* sugar
-* confidence
-* image_path
-* created_at
+- id
+- user_id
+- food_name
+- weight_grams
+- calories
+- protein
+- fat
+- carbohydrates
+- fiber
+- sugar
+- confidence
+- image_path
+- created_at
 
 ---
 
-# 8. Application Workflow
+# Application Workflow
 
 ```text
 User
@@ -167,60 +199,64 @@ Prediction History & Analytics
 
 ---
 
-# 9. API Endpoints
+# API Endpoints
 
 ## Authentication
 
-| Method | Endpoint       | Description        |
-| ------ | -------------- | ------------------ |
-| POST   | /auth/register | Register User      |
-| POST   | /auth/login    | Login User         |
-| GET    | /auth/me       | Get Logged-in User |
+| Method | Endpoint | Description |
+|---------|----------|-------------|
+| POST | /auth/register | Register User |
+| POST | /auth/login | Login User |
+| GET | /auth/me | Get Logged-in User |
 
 ---
 
 ## Prediction
 
-| Method | Endpoint                    | Description                          |
-| ------ | --------------------------- | ------------------------------------ |
-| POST   | /prediction/predict         | Predict Food and Calculate Nutrition |
-| GET    | /prediction/history         | User Prediction History              |
-| DELETE | /prediction/{prediction_id} | Delete Prediction                    |
-| GET    | /prediction/today-summary   | Today's Nutrition Summary            |
-| GET    | /prediction/weekly-summary  | Weekly Nutrition Summary             |
-| GET    | /prediction/monthly-summary | Monthly Nutrition Summary            |
-| GET    | /prediction/top-foods       | Most Consumed Foods                  |
-| GET    | /prediction/all-history     | View All Prediction History (Admin)  |
-| GET    | /prediction/admin-dashboard | Admin Dashboard                      |
+| Method | Endpoint | Description |
+|---------|----------|-------------|
+| POST | /prediction/predict | Predict Food & Calculate Nutrition |
+| GET | /prediction/history | Prediction History (Paginated) |
+| DELETE | /prediction/{prediction_id} | Delete Prediction |
+| GET | /prediction/today-summary | Today's Nutrition Summary |
+| GET | /prediction/weekly-summary | Weekly Nutrition Summary |
+| GET | /prediction/monthly-summary | Monthly Nutrition Summary |
+| GET | /prediction/top-foods | Top Consumed Foods |
+| GET | /prediction/all-history | View All Prediction History (Admin) |
+| GET | /prediction/admin-dashboard | Admin Dashboard |
 
 ---
 
-## User
+## Users
 
-| Method | Endpoint       | Description       |
-| ------ | -------------- | ----------------- |
-| GET    | /users/profile | View User Profile |
-
----
-
-# 10. Prerequisites
-
-Before running the project, make sure the following software is installed:
-
-* Python 3.12 or later
-* PostgreSQL
-* Git
-* Visual Studio Code (Recommended)
-* pip (Python Package Manager)
+| Method | Endpoint | Description |
+|---------|----------|-------------|
+| GET | /users/profile | View User Profile |
+| PATCH | /users/profile | Update User Profile |
+| PATCH | /users/change-password | Change Password |
+| GET | /users/admin/users | Get All Users (Admin) |
+| DELETE | /users/admin/users/{user_id} | Delete User (Admin) |
 
 ---
 
-# 11. Installation
+# Prerequisites
+
+Before running the project, install:
+
+- Python 3.12 or later
+- PostgreSQL
+- Git
+- Visual Studio Code (Recommended)
+- pip (Python Package Manager)
+
+---
+
+# Installation
 
 ## 1. Clone the Repository
 
 ```bash
-git clone https://github.com/<your-username>/food-calories-prediction.git
+git clone https://github.com/hirvak/food-calories-prediction.git
 ```
 
 ## 2. Navigate to the Project
@@ -229,13 +265,19 @@ git clone https://github.com/<your-username>/food-calories-prediction.git
 cd Food_Calories_Project
 ```
 
-## 3. Create a Virtual Environment
+## 3. Navigate to the App Folder
+
+```bash
+cd app
+```
+
+## 4. Create Virtual Environment
 
 ```bash
 python -m venv venv
 ```
 
-## 4. Activate the Virtual Environment
+## 5. Activate Virtual Environment
 
 ### Windows
 
@@ -243,13 +285,13 @@ python -m venv venv
 .\venv\Scripts\activate
 ```
 
-### Linux / macOS
+### Linux/macOS
 
 ```bash
 source venv/bin/activate
 ```
 
-## 5. Install Dependencies
+## 6. Install Dependencies
 
 ```bash
 pip install -r requirements.txt
@@ -257,9 +299,9 @@ pip install -r requirements.txt
 
 ---
 
-# 11. Environment Variables
+# Environment Variables
 
-Create a `.env` file inside the **app** directory and add:
+Create a `.env` file inside the **app** directory.
 
 ```env
 DATABASE_URL=postgresql://username:password@localhost:5432/food_calories
@@ -270,15 +312,15 @@ ACCESS_TOKEN_EXPIRE_MINUTES=30
 
 ---
 
-# 12. Database Setup
+# Database Setup
 
-Run the database migrations:
+Run Alembic migrations:
 
 ```bash
 alembic upgrade head
 ```
 
-Import the nutrition dataset:
+Import nutrition data:
 
 ```bash
 python -m Scripts.import_nutrition
@@ -286,13 +328,7 @@ python -m Scripts.import_nutrition
 
 ---
 
-# 13. Run the Application
-
-Navigate to the **app** directory:
-
-```bash
-cd app
-```
+# Run the Application
 
 Start the FastAPI server:
 
@@ -300,45 +336,32 @@ Start the FastAPI server:
 uvicorn main:app --reload
 ```
 
-The application will be available at:
+Application:
 
 ```
 http://127.0.0.1:8000
 ```
 
-Swagger API Documentation:
+Swagger UI:
 
 ```
 http://127.0.0.1:8000/docs
 ```
 
-ReDoc Documentation:
-
-```
-http://127.0.0.1:8000/redoc
-```
-
 ---
 
-# 14. Future Enhancements
+# Future Enhancements
 
-* Update User Profile
-* Change Password
-* Admin User Management
-* React Frontend
-* Interactive Charts & Graphs
-* Docker Support
-* Cloud Deployment (AWS / Render)
+- React Frontend
+- Interactive Charts & Graphs
+- Food Recommendation System
+- Multi-Food Detection in a Single Image
+- Nutrition Trends & Reports
+- Docker Support
+- Cloud Deployment (AWS / Render)
 
 ---
-
-# Author
 
 **Hirva Kansara**
 
-Computer Science & Business Systems (CSBS)
-
-Pandit Deendayal Energy University (PDEU)
-
 ---
-
