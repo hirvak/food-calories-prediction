@@ -8,4 +8,4 @@ MODEL_PATH = os.path.join(
     "best.pt"
 )
 
-model = YOLO(MODEL_PATH)
+model = YOLO(MODEL_PATH)                                                
