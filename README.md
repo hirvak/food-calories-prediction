@@ -275,7 +275,8 @@ Full interactive API documentation is available via Swagger at `/docs` once the 
 ## 👩‍💻 Author
 
 **Hirva Kansara**
-Computer Science & Business Systems (CSBS)
+
+
 GitHub: [github.com/hirvak](https://github.com/hirvak)
 
 ---
