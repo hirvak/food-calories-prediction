@@ -1,34 +1,72 @@
-# Virtual Environment
+# ----------------------------
+# Virtual Environments
+# ----------------------------
 venv/
+.venv/
 
+# ----------------------------
+# Node
+# ----------------------------
+node_modules/
+frontend/node_modules/
+frontend/dist/
+frontend/build/
+
+# ----------------------------
 # Environment Variables
-app/.env
+# ----------------------------
 .env
+app/.env
+frontend/.env
 
-# Python Cache
+# ----------------------------
+# Python
+# ----------------------------
 __pycache__/
-*.pyc
+*.py[cod]
+*$py.class
 
-# VS Code
+# ----------------------------
+# IDE
+# ----------------------------
 .vscode/
+.idea/
 
+# ----------------------------
 # Logs
+# ----------------------------
 *.log
 
+# ----------------------------
 # Jupyter
+# ----------------------------
 .ipynb_checkpoints/
 
-# Large folders
+# ----------------------------
+# Large Development Folders
+# ----------------------------
 Backup/
 Datasets/
 Notebook/
 Results/
 
-# OS files
+# ----------------------------
+# OS Files
+# ----------------------------
 .DS_Store
 Thumbs.db
 
-# YOLO Models
+# ----------------------------
+# ML Models (Optional)
+# ----------------------------
 *.pt
-app/models/
 Models/
+app/models/
+
+# ----------------------------
+# Build / Cache
+# ----------------------------
+dist/
+build/
+.cache/
+.pytest_cache/

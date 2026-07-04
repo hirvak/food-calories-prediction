@@ -7,10 +7,12 @@ from Utils.utils import get_session
 from Security.security import get_current_user
 from Prediction.models import Prediction
 from fastapi import HTTPException
-from Prediction.controller import get_user_predictions,get_all_predictions,save_prediction,get_today_predictions,get_weekly_predictions,get_monthly_predictions,get_top_foods,delete_prediction,get_user_predictions_paginated,get_all_predictions_paginated
+from Prediction.controller import get_user_predictions,get_all_predictions,save_prediction,get_today_predictions,get_weekly_predictions,get_monthly_predictions,get_top_foods,delete_prediction,get_user_predictions_paginated,get_all_predictions_paginated,get_dashboard_analytics,update_prediction
 from fastapi import HTTPException
+from Nutrition.nutrition_coach import generate_nutrition_coach
+from Nutrition.healthy_alternatives import get_healthy_alternatives
 from PIL import Image
-
+from Prediction.schema import PredictionUpdate
 router = APIRouter(
     prefix="/prediction",
     tags=["Prediction"]
@@ -35,6 +37,15 @@ async def predict_food(image: UploadFile = File(...),weight: float = Form(...),s
     fiber = (nutrition.fiber * weight) / 100
     sugar = (nutrition.sugar * weight) / 100
 
+    nutrition_coach = generate_nutrition_coach(
+    calories=round(calories, 2),
+    protein=round(protein, 2),
+    fat=round(fat, 2),
+    carbohydrates=round(carbohydrates, 2),
+    fiber=round(fiber, 2),
+    sugar=round(sugar, 2),)
+
+    healthy_alternatives = get_healthy_alternatives(food_name)
     prediction = Prediction(
         user_id=current_user.id,
         food_name=food_name,
@@ -59,8 +70,10 @@ async def predict_food(image: UploadFile = File(...),weight: float = Form(...),s
             "fat": round(fat, 2),
             "carbohydrates": round(carbohydrates, 2),
             "fiber": round(fiber, 2),
-            "sugar": round(sugar, 2)
-        }
+            "sugar": round(sugar, 2),
+        },
+        "nutrition_coach": nutrition_coach,
+        "healthy_alternatives": healthy_alternatives,
     }
 
 @router.get("/history")
@@ -155,3 +168,29 @@ def remove_prediction(prediction_id: int,session: Session = Depends(get_session)
 
     delete_prediction(prediction_id,session)
     return {"message": "Prediction deleted successfully"}
+
+@router.get("/dashboard-analytics")
+def dashboard_analytics(session: Session = Depends(get_session),current_user=Depends(get_current_user)):
+    """
+    Returns all dashboard analytics in a single response.
+    """
+
+    return get_dashboard_analytics(current_user.id, session)
+
+@router.patch("/{prediction_id}")
+def edit_prediction(prediction_id: int,data: PredictionUpdate,session: Session = Depends(get_session),current_user=Depends(get_current_user)):
+
+    prediction = session.get(Prediction, prediction_id)
+    if prediction is None:
+        raise HTTPException(status_code=404,detail="Prediction not found")
+
+    # Only owner or admin can edit
+    if (current_user.role != "admin" and prediction.user_id != current_user.id):
+        raise HTTPException(status_code=403,detail="You are not authorized to edit this prediction")
+
+    updated_prediction = update_prediction(prediction_id=prediction_id,food_name=data.food_name,weight=data.weight,session=session,)
+
+    if updated_prediction == "food_not_found":
+        raise HTTPException(status_code=404,detail="Food not found in nutrition database")
+
+    return {"message": "Prediction updated successfully","prediction": updated_prediction,}

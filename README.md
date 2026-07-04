@@ -1,310 +1,182 @@
-# Food Calories Prediction System
+<div align="center">
 
-An AI-powered **Food Calories Prediction System** built using **FastAPI**, **YOLOv8**, and **PostgreSQL**. The application detects food items from an uploaded image, calculates nutritional values based on the user-provided weight, stores prediction history, and provides nutrition analytics for users and administrators.
+# NutriLens
 
----
+### Smart Nutrition Analytics Platform
 
-# Project Objectives
+**AI-powered meal analysis, nutrition tracking, and mentor-driven user monitoring — built as a full-stack web application.**
 
-- Detect food items using the YOLOv8 deep learning model.
-- Calculate nutritional values based on food weight.
-- Store prediction history in PostgreSQL.
-- Provide nutrition summaries and analytics.
-- Implement secure JWT Authentication with Role-Based Access Control.
+</div>
 
 ---
 
-# Features
+## 📖 Overview
 
-## 1. Authentication
+**NutriLens** is a full-stack nutrition analytics platform that lets users analyze meals from food images, estimate nutritional values based on serving weight, monitor eating habits over time, and generate detailed nutrition reports.
 
-- User Registration
-- User Login using JWT Authentication
-- Get Logged-in User Details
-- Update User Profile
-- Change Password
-- Role-Based Authorization (User & Admin)
+It combines computer vision (YOLOv8) with a modern web interface to turn food tracking from manual guesswork into an automated, data-driven process — while giving admins the tools to actively guide users rather than just store their data.
 
 ---
 
-## 2. AI Food Prediction
+## 🎯 Project Objectives
 
-- Upload Food Image
-- Food Detection using YOLOv8
-- Confidence Score
-- Weight-Based Nutrition Calculation
-- Save Prediction History
-
----
-
-## 3. User Features
-
-- View User Profile
-- Update User Profile
-- Change Password
-- View Prediction History
-- Delete Prediction
-- Prediction History Pagination
-- Today's Nutrition Summary
-- Weekly Nutrition Summary
-- Monthly Nutrition Summary
-- Top Consumed Foods
+- Automate food recognition and nutrition estimation using computer vision
+- Remove the friction of manual calorie/macro logging
+- Give users a clear, ongoing picture of their eating habits
+- Enable a supervised nutrition model where admins can monitor and guide users, not just manage accounts
+- Provide exportable, shareable nutrition reports for personal or clinical use
+- Build the platform on a modern, scalable full-stack architecture
 
 ---
 
-## 4. Admin Features
+## 🧑‍⚕️ Nutrition Monitoring Concept
 
-- Admin Dashboard
-- View All Users
-- Delete User
-- View All Prediction History
-- User Pagination
-- Total Users
-- Total Predictions
-- Total Calories Consumed
-- Most Frequently Detected Food
+NutriLens is built around a **human-in-the-loop mentorship model**, not pure self-tracking.
 
----
+- **Users** log meals independently — the system handles detection and nutrition calculation automatically.
+- **Admins** have full visibility into every user's meal history, nutrition trends, and analysis logs — effectively functioning as a **nutritionist or mentor** rather than a backend operator.
 
-# Tech Stack
+This means an admin can:
+- Spot unhealthy eating patterns across users before they become long-term habits
+- Monitor at-risk users based on real logged nutrition data, not self-reported summaries
+- Step in with guidance backed by actual data, the way a nutrition coach would
 
-| Technology | Purpose |
-|------------|---------|
-| FastAPI | Backend Framework |
-| PostgreSQL | Database |
-| SQLModel | ORM |
-| Alembic | Database Migration |
-| JWT | Authentication |
-| Passlib | Password Hashing |
-| YOLOv8 (Ultralytics) | Food Detection |
-| Pillow | Image Processing |
-| Pandas | Nutrition Dataset Processing |
-| Python | Programming Language |
+Users get automated tracking. Admins get the visibility to actually coach.
 
 ---
 
-# Backend Highlights
+## ✨ Key Features
 
-- RESTful API
-- JWT Authentication
-- Password Hashing
-- Role-Based Access Control
-- SQLModel ORM
-- Alembic Database Migration
-- Pagination Support
-- PostgreSQL Integration
+### 👤 User Features
+- Secure registration & login with JWT authentication
+- Meal analysis using food images
+- Automatic nutrition estimation based on serving weight
+- BMI calculator
+- Meal history tracking
+- Nutrition reports (PDF, CSV & Excel export)
+- Profile management & password updates
+- Personalized nutrition insights
+
+### 🛡️ Admin Features (Nutritionist/Mentor View)
+- Full visibility into every user's meal history and nutrition trends
+- Platform analytics dashboard to spot eating patterns at scale
+- Meal analysis logs & prediction history per user
+- User management (view, delete)
+- Platform-wide report generation
+- Role-based access control
 
 ---
 
-# Project Structure
+## 👥 User & Admin Roles
+
+| Role | Capabilities |
+|---|---|
+| **User** | Analyze meals, view history, download reports, use BMI calculator, manage profile |
+| **Admin** | Acts as nutritionist/mentor — full visibility into user nutrition data, analytics dashboard, meal analysis logs, platform reports, user management |
+
+---
+
+## 🏗 Architecture Diagram
 
 ```text
-Food_Calories_Project/
+┌─────────────────────┐        ┌──────────────────────┐
+│      Frontend        │  HTTP  │       Backend         │
+│  React + TypeScript  │◄──────►│   FastAPI (Python)    │
+│      (Vite)          │  REST  │                        │
+└─────────────────────┘        └──────────┬────────────┘
+                                            │
+                     ┌──────────────────────┼───────────────────────┐
+                     ▼                      ▼                       ▼
+            ┌────────────────┐   ┌───────────────────┐   ┌────────────────────┐
+            │   PostgreSQL    │   │   YOLOv8 Model     │   │   Report Generator  │
+            │  (SQLModel ORM) │   │  (Food Detection)  │   │  (PDF / CSV / Excel) │
+            └────────────────┘   └───────────────────┘   └────────────────────┘
+```
+
+- **Frontend** communicates with the backend via REST APIs (Axios)
+- **Backend** handles auth, business logic, and orchestrates the ML pipeline
+- **YOLOv8** performs food detection on uploaded images
+- **PostgreSQL** persists users, meals, and predictions via SQLModel + Alembic migrations
+- **Report Generator** compiles nutrition data into downloadable reports
+
+---
+
+## 🧠 Workflow
+
+```text
+            Upload Meal Image
+                    │
+                    ▼
+        Food Detection (YOLOv8)
+                    │
+                    ▼
+      User Enters Serving Weight
+                    │
+                    ▼
+      Nutrition Calculation Engine
+                    │
+                    ▼
+      Save Meal Analysis to Database
+                    │
+                    ▼
+Dashboard • History • Reports • Analytics
+```
+
+---
+
+## 🛠 Tech Stack
+
+| Layer | Technologies |
+|---|---|
+| **Frontend** | React, TypeScript, Vite, Tailwind CSS, Axios, React Router |
+| **Backend** | FastAPI, Python, SQLModel, PostgreSQL, Alembic, JWT, Passlib |
+| **AI / ML** | YOLOv8 (Ultralytics), Pillow, Pandas |
+
+---
+
+## 📂 Folder Structure
+
+```text
+NutriLens/
 │
 ├── app/
 │   ├── Auth/
 │   ├── Users/
 │   ├── Prediction/
 │   ├── Nutrition/
+│   ├── Reports/
 │   ├── ML/
 │   ├── Security/
 │   ├── Scripts/
 │   ├── Utils/
-│   ├── alembic/
 │   ├── models/
 │   ├── main.py
 │   └── requirements.txt
 │
-├── Models/
-├── .gitignore
-└── README.md
+├── frontend/
+│
+├── README.md
+│
+└── .gitignore
 ```
 
 ---
 
-# Database Tables
-
-## User
-
-- id
-- name
-- email
-- hashed_password
-- role
-- is_active
-- created_at
-
----
-
-## Nutrition
-
-- id
-- food_name
-- calories_per_100g
-- protein
-- fat
-- carbohydrates
-- fiber
-- sugar
-
----
-
-## Prediction
-
-- id
-- user_id
-- food_name
-- weight_grams
-- calories
-- protein
-- fat
-- carbohydrates
-- fiber
-- sugar
-- confidence
-- image_path
-- created_at
-
----
-
-# Application Workflow
-
-```text
-User
-   │
-   ▼
-Upload Food Image
-   │
-   ▼
-YOLOv8 Model
-   │
-   ▼
-Food Detection
-   │
-   ▼
-Nutrition Lookup
-   │
-   ▼
-User Enters Weight
-   │
-   ▼
-Nutrition Calculation
-   │
-   ▼
-Save Prediction
-   │
-   ▼
-Prediction History & Analytics
-```
-
----
-
-# API Endpoints
-
-## Authentication
-
-| Method | Endpoint | Description |
-|---------|----------|-------------|
-| POST | /auth/register | Register User |
-| POST | /auth/login | Login User |
-| GET | /auth/me | Get Logged-in User |
-
----
-
-## Prediction
-
-| Method | Endpoint | Description |
-|---------|----------|-------------|
-| POST | /prediction/predict | Predict Food & Calculate Nutrition |
-| GET | /prediction/history | Prediction History (Paginated) |
-| DELETE | /prediction/{prediction_id} | Delete Prediction |
-| GET | /prediction/today-summary | Today's Nutrition Summary |
-| GET | /prediction/weekly-summary | Weekly Nutrition Summary |
-| GET | /prediction/monthly-summary | Monthly Nutrition Summary |
-| GET | /prediction/top-foods | Top Consumed Foods |
-| GET | /prediction/all-history | View All Prediction History (Admin) |
-| GET | /prediction/admin-dashboard | Admin Dashboard |
-
----
-
-## Users
-
-| Method | Endpoint | Description |
-|---------|----------|-------------|
-| GET | /users/profile | View User Profile |
-| PATCH | /users/profile | Update User Profile |
-| PATCH | /users/change-password | Change Password |
-| GET | /users/admin/users | Get All Users (Admin) |
-| DELETE | /users/admin/users/{user_id} | Delete User (Admin) |
-
----
-
-# Prerequisites
-
-Before running the project, install:
-
-- Python 3.12 or later
-- PostgreSQL
-- Git
-- Visual Studio Code (Recommended)
-- pip (Python Package Manager)
-
----
-
-# Installation
-
-## 1. Clone the Repository
+## 📦 Installation
 
 ```bash
-git clone https://github.com/hirvak/food-calories-prediction.git
-```
-
-## 2. Navigate to the Project
-
-```bash
-cd Food_Calories_Project
-```
-
-## 3. Navigate to the App Folder
-
-```bash
-cd app
-```
-
-## 4. Create Virtual Environment
-
-```bash
-python -m venv venv
-```
-
-## 5. Activate Virtual Environment
-
-### Windows
-
-```bash
-.\venv\Scripts\activate
-```
-
-### Linux/macOS
-
-```bash
-source venv/bin/activate
-```
-
-## 6. Install Dependencies
-
-```bash
-pip install -r requirements.txt
+git clone https://github.com/hirvakansara/NutriLens.git
+cd NutriLens
 ```
 
 ---
 
-# Environment Variables
+## ⚙ Environment Variables
 
-Create a `.env` file inside the **app** directory.
+Create a `.env` file inside the `app/` folder:
 
 ```env
-DATABASE_URL=postgresql://username:password@localhost:5432/food_calories
+DATABASE_URL=postgresql://username:password@localhost:5432/nutrilens
 SECRET_KEY=your_secret_key
 ALGORITHM=HS256
 ACCESS_TOKEN_EXPIRE_MINUTES=30
@@ -312,56 +184,113 @@ ACCESS_TOKEN_EXPIRE_MINUTES=30
 
 ---
 
-# Database Setup
-
-Run Alembic migrations:
+## 🖥 Backend Setup
 
 ```bash
+python -m venv venv
+
+# Activate the environment
+# Windows:
+venv\Scripts\activate
+# Linux / macOS:
+source venv/bin/activate
+
+# Install dependencies
+pip install -r app/requirements.txt
+
+# Run database migrations
 alembic upgrade head
+
+# Start the backend
+uvicorn app.main:app --reload
 ```
 
-Import nutrition data:
+- Backend: `http://127.0.0.1:8000`
+- Swagger docs: `http://127.0.0.1:8000/docs`
+
+---
+
+## 💻 Frontend Setup
 
 ```bash
-python -m Scripts.import_nutrition
+cd frontend
+npm install
+npm run dev
 ```
 
 ---
 
-# Run the Application
+## 📡 API Overview
 
-Start the FastAPI server:
+| Endpoint | Method | Description |
+|---|---|---|
+| `/auth/register` | POST | Register a new user |
+| `/auth/login` | POST | Authenticate and receive a JWT token |
+| `/prediction/analyze` | POST | Upload a meal image and get nutrition analysis |
+| `/nutrition/history` | GET | Retrieve a user's meal history |
+| `/reports/generate` | GET | Generate a nutrition report (PDF/CSV/Excel) |
+| `/admin/users` | GET | Admin: list all users |
+| `/admin/meals` | GET | Admin: view all meal analysis logs |
 
+**Example request:**
 ```bash
-uvicorn main:app --reload
+curl -X POST "http://127.0.0.1:8000/prediction/analyze" \
+  -H "Authorization: Bearer <your_token>" \
+  -F "image=@meal.jpg" \
+  -F "serving_weight=250"
 ```
 
-Application:
+**Example response:**
+```json
+{
+  "food_item": "grilled chicken breast",
+  "confidence": 0.91,
+  "serving_weight_g": 250,
+  "nutrition": {
+    "calories": 412,
+    "protein_g": 58.5,
+    "fat_g": 14.2,
+    "carbs_g": 0.0
+  }
+}
+```
 
-```
-http://127.0.0.1:8000
-```
-
-Swagger UI:
-
-```
-http://127.0.0.1:8000/docs
-```
+Full interactive API documentation is available via Swagger at `/docs` once the backend is running.
 
 ---
 
-# Future Enhancements
 
-- React Frontend
-- Interactive Charts & Graphs
-- Food Recommendation System
-- Multi-Food Detection in a Single Image
-- Nutrition Trends & Reports
-- Docker Support
-- Cloud Deployment (AWS / Render)
+## 🚀 Future Enhancements
+
+- Multi-food detection in a single image
+- Barcode scanner integration
+- Mobile application
+- Cloud deployment (AWS / GCP / Azure)
+- Docker support for one-command setup
+- Meal recommendation system
+- Weekly diet planner
 
 ---
+
+## 👩‍💻 Author
 
 **Hirva Kansara**
+Computer Science & Business Systems (CSBS)
+GitHub: [github.com/hirvak](https://github.com/hirvak)
 
 ---
+
+## 📄 License
+
+This project is licensed under the [MIT License](LICENSE).
+
+---
+
+<div align="center">
+
+### ⭐ If you found this project helpful, consider giving it a star.
+
+**NutriLens** — Smart Nutrition Analytics Platform
+Built with FastAPI, React, and YOLOv8
+
+</div>
