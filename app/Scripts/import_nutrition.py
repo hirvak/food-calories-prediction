@@ -5,8 +5,12 @@ from sqlmodel import Session
 from Utils.utils import engine
 from Nutrition.models import Nutrition
 
-CSV_PATH = r"D:\Final_Model_Food _Calories\Datasets\food_nutrition_lookup_final (1).csv"
+import os
 
+CSV_PATH = os.path.join(
+    os.path.dirname(__file__),
+    "food_nutrition_lookup_final.csv"
+)
 df = pd.read_csv(CSV_PATH)
 
 with Session(engine) as session:
