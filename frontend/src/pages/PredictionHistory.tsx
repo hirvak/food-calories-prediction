@@ -128,19 +128,19 @@ export default function PredictionHistory() {
       {/* Header Summary Cards for displayed logs */}
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-6">
         <div className="bg-white border border-slate-200 rounded-2xl p-5 shadow-sm text-left">
-          <span className="text-xs font-semibold text-[#6B7280] uppercase tracking-wider">Page Calories</span>
+          <span className="text-xs font-semibold text-[#6B7280] uppercase tracking-wider">Calories</span>
           <h4 className="text-lg font-bold text-[#111827] mt-1">{totalDisplayCalories} kcal</h4>
         </div>
         <div className="bg-white border border-slate-200 rounded-2xl p-5 shadow-sm text-left">
-          <span className="text-xs font-semibold text-[#6B7280] uppercase tracking-wider">Page Carbohydrates</span>
+          <span className="text-xs font-semibold text-[#6B7280] uppercase tracking-wider">Carbohydrates</span>
           <h4 className="text-lg font-bold text-[#2563EB] mt-1">{totalDisplayCarbs} g</h4>
         </div>
         <div className="bg-white border border-slate-200 rounded-2xl p-5 shadow-sm text-left">
-          <span className="text-xs font-semibold text-[#6B7280] uppercase tracking-wider">Page Protein</span>
+          <span className="text-xs font-semibold text-[#6B7280] uppercase tracking-wider">Protein</span>
           <h4 className="text-lg font-bold text-[#EF4444] mt-1">{totalDisplayProtein} g</h4>
         </div>
         <div className="bg-white border border-slate-200 rounded-2xl p-5 shadow-sm text-left">
-          <span className="text-xs font-semibold text-[#6B7280] uppercase tracking-wider">Page Fats</span>
+          <span className="text-xs font-semibold text-[#6B7280] uppercase tracking-wider">Fats</span>
           <h4 className="text-lg font-bold text-[#F59E0B] mt-1">{totalDisplayFat} g</h4>
         </div>
       </div>

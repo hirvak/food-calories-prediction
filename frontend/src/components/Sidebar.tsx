@@ -1,18 +1,19 @@
-import { NavLink } from 'react-router-dom';
+import { useState, useRef, useEffect } from 'react';
+import { NavLink, Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import Logo from './ui/Logo';
 import { 
   LayoutDashboard, 
   Compass, 
   Heart, 
-  Brain, 
-  LogOut,
   ShieldCheck,
   Users,
   Database,
   Activity,
-  FileText
+  FileText,
+  ChevronUp
 } from 'lucide-react';
+
 
 interface SidebarProps {
   isOpen: boolean;
@@ -22,6 +23,36 @@ interface SidebarProps {
 export const Sidebar = ({ isOpen, setIsOpen }: SidebarProps) => {
   const { user, logout } = useAuth();
   const isAdmin = user?.role === 'admin';
+
+  const [isDropdownOpen, setIsDropdownOpen] = useState(false);
+  const dropdownRef = useRef<HTMLDivElement>(null);
+
+  // Click outside handler to close dropdown
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
+        setIsDropdownOpen(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, []);
+
+  // Keyboard Escape key handler to close dropdown
+  useEffect(() => {
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') {
+        setIsDropdownOpen(false);
+      }
+    };
+    document.addEventListener('keydown', handleKeyDown);
+    return () => {
+      document.removeEventListener('keydown', handleKeyDown);
+    };
+  }, []);
+
 
   // Active state: Blue bg with white text
   // Hover state: bg-slate-800/60 text-slate-100
@@ -44,7 +75,7 @@ export const Sidebar = ({ isOpen, setIsOpen }: SidebarProps) => {
       )}
 
       <aside
-        className={`fixed top-0 bottom-0 left-0 z-45 w-[220px] bg-[#0F172A] border-r border-slate-800 flex flex-col justify-between transition-transform duration-300 lg:translate-x-0 ${
+        className={`fixed top-0 bottom-0 left-0 z-45 w-[220px] bg-[#152033] border-r border-slate-800 flex flex-col justify-between transition-transform duration-300 lg:translate-x-0 ${
           isOpen ? 'translate-x-0' : '-translate-x-full'
         }`}
       >
@@ -87,11 +118,6 @@ export const Sidebar = ({ isOpen, setIsOpen }: SidebarProps) => {
               <span>Reports</span>
             </NavLink>
 
-            <NavLink to="/profile" onClick={() => setIsOpen(false)} className={linkClass}>
-              <Brain className="w-4.5 h-4.5" />
-              <span>Profile</span>
-            </NavLink>
-
             {/* Admin Links */}
             {isAdmin && (
               <div className="flex flex-col gap-1.5 mt-4.5 pt-4.5 border-t border-slate-800">
@@ -116,27 +142,58 @@ export const Sidebar = ({ isOpen, setIsOpen }: SidebarProps) => {
           </nav>
         </div>
 
-        {/* Footer profile & logout */}
-        <div className="p-4 border-t border-slate-800 flex flex-col gap-3 bg-slate-900/20">
-          <div className="flex items-center gap-2.5 px-1">
-            <div className="w-7 h-7 rounded-full bg-blue-600 text-white flex items-center justify-center font-bold text-[10px] uppercase border border-slate-800 shadow-sm flex-shrink-0">
-              {user?.name.substring(0, 2)}
+        {/* Footer profile & menu */}
+        <div ref={dropdownRef} className="p-4 border-t border-slate-800 bg-slate-900/20 relative">
+          {/* Dropdown Menu */}
+          {isDropdownOpen && (
+            <div className="absolute bottom-full left-4 right-4 mb-2 bg-slate-900 border border-slate-800 rounded-xl shadow-xl shadow-black/45 overflow-hidden z-50 animate-slide-up-fade origin-bottom">
+              <div className="p-1.5 flex flex-col gap-0.5">
+                <Link
+                  to="/profile"
+                  onClick={() => {
+                    setIsDropdownOpen(false);
+                    setIsOpen(false);
+                  }}
+                  className="flex items-center justify-start px-3 py-2 text-xs font-bold text-slate-100 hover:bg-slate-800/60 hover:text-slate-100 rounded-lg transition-all duration-150 cursor-pointer text-left w-full"
+                >
+                  Profile
+                </Link>
+                <div className="h-[1px] bg-slate-800/80 my-1 mx-1"></div>
+                <button
+                  onClick={() => {
+                    setIsDropdownOpen(false);
+                    logout();
+                    window.location.href = '/login';
+                  }}
+                  className="flex items-center justify-start px-3 py-2 text-xs font-bold text-slate-100 hover:bg-rose-950/20 hover:text-rose-400 rounded-lg transition-all duration-150 cursor-pointer text-left w-full"
+                >
+                  Sign Out
+                </button>
+              </div>
             </div>
-            <div className="flex flex-col min-w-0 text-left">
-              <span className="text-xs font-bold text-slate-200 truncate leading-none capitalize">{user?.name}</span>
-              <span className="text-[9px] font-bold text-slate-500 uppercase tracking-wider truncate mt-0.5 leading-none">{user?.role} Role</span>
-            </div>
-          </div>
+          )}
 
+          {/* Clickable Profile Trigger */}
           <button
-            onClick={() => {
-              logout();
-              window.location.href = '/login';
-            }}
-            className="w-full flex items-center justify-center gap-2 px-3 py-2 rounded-xl border border-slate-800 bg-slate-900 text-slate-450 text-xs font-bold hover:bg-rose-950/20 hover:text-rose-400 hover:border-rose-900/40 transition-all shadow-sm cursor-pointer active:scale-95"
+            onClick={() => setIsDropdownOpen(!isDropdownOpen)}
+            className="w-full flex items-center justify-between gap-2 px-1.5 py-1.5 rounded-xl border border-transparent hover:border-slate-800 hover:bg-slate-800/30 text-left transition-all duration-200 cursor-pointer active:scale-[0.98] outline-none focus-visible:ring-1 focus-visible:ring-slate-700"
+            aria-haspopup="true"
+            aria-expanded={isDropdownOpen}
           >
-            <LogOut className="w-3.5 h-3.5" />
-            <span>Sign Out</span>
+            <div className="flex items-center gap-2.5 min-w-0">
+              <div className="w-7 h-7 rounded-full bg-blue-600 text-white flex items-center justify-center font-bold text-[10px] uppercase border border-slate-800 shadow-sm flex-shrink-0">
+                {user?.name.substring(0, 2)}
+              </div>
+              <div className="flex flex-col min-w-0 text-left">
+                <span className="text-xs font-bold text-slate-200 truncate leading-none capitalize">{user?.name}</span>
+                <span className="text-[9px] font-bold text-slate-500 uppercase tracking-wider truncate mt-0.5 leading-none">{user?.role} Role</span>
+              </div>
+            </div>
+            <ChevronUp 
+              className={`w-4 h-4 text-slate-400 flex-shrink-0 transition-transform duration-200 ${
+                isDropdownOpen ? 'rotate-180 text-slate-200' : ''
+              }`} 
+            />
           </button>
         </div>
       </aside>

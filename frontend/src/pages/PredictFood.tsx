@@ -279,7 +279,8 @@ export default function PredictFood() {
                       </div>
                       <div className="flex flex-col min-w-0">
                         <span className="text-[8px] uppercase font-bold text-slate-400">Accuracy</span>
-                        <span className="text-xs font-extrabold text-slate-800 truncate">Recognition Score</span>
+                        <span className="text-xs font-extrabold text-slate-800 whitespace-normal">Recognition Score
+                        </span>                      
                       </div>
                     </div>
 
