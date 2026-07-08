@@ -9,7 +9,15 @@ def save_prediction(prediction: Prediction,session: Session):
     session.add(prediction)
     session.commit()
     session.refresh(prediction)
-    return prediction
+    
+    from Users.models import User
+    from Users.services.streak_service import update_streak
+    user = session.get(User, prediction.user_id)
+    streak_updated_today = False
+    if user:
+        streak_updated_today = update_streak(user, prediction.created_at, session)
+        
+    return prediction, streak_updated_today
 
 def get_user_predictions(user_id: int,session: Session):
     statement = select(Prediction).where(Prediction.user_id == user_id)
@@ -51,8 +59,27 @@ def delete_prediction(prediction_id: int,session: Session):
     prediction = session.get(Prediction,prediction_id)
     if prediction is None:
         return None
+        
+    user_id = prediction.user_id
+    deleted_date = prediction.created_at
+    
+    from Users.services.streak_service import get_local_date, recalculate_streak
+    deleted_local_date = get_local_date(deleted_date)
+    
     session.delete(prediction)
     session.commit()
+    
+    # Check if there are other predictions on the same day for this user
+    all_user_predictions = session.exec(select(Prediction).where(Prediction.user_id == user_id)).all()
+    other_meals_on_same_day = [
+        p for p in all_user_predictions 
+        if get_local_date(p.created_at) == deleted_local_date
+    ]
+    
+    if not other_meals_on_same_day:
+        # If no other meals are left on that day, trigger recalculation
+        recalculate_streak(user_id, session)
+        
     return prediction
 
 def get_user_predictions_paginated(user_id: int,page: int,limit: int,session: Session):
@@ -131,10 +158,20 @@ def get_recent_activity(user_id: int, session: Session):
 
 def get_dashboard_analytics(user_id: int, session: Session):
 
+    from Users.models import User
+    from Users.services.streak_service import get_active_streak_state
+
     weekly_predictions = get_weekly_predictions(user_id, session)
     protein = round(sum(p.protein for p in weekly_predictions), 2)
     fat = round(sum(p.fat for p in weekly_predictions), 2)
     carbohydrates = round(sum(p.carbohydrates for p in weekly_predictions), 2)
+
+    user = session.get(User, user_id)
+    streak_state = get_active_streak_state(user) if user else {
+        "current_streak": 0,
+        "longest_streak": 0,
+        "last_meal_logged_date": None
+    }
 
     return DashboardAnalyticsResponse(
 
@@ -143,7 +180,10 @@ def get_dashboard_analytics(user_id: int, session: Session):
         macronutrients=Macronutrients(protein=protein,fat=fat,carbohydrates=carbohydrates),
         statistics=get_dashboard_statistics(user_id, session),
         recent_activity=get_recent_activity(user_id, session),
-        top_foods=get_top_foods(user_id, session)
+        top_foods=get_top_foods(user_id, session),
+        current_streak=streak_state["current_streak"],
+        longest_streak=streak_state["longest_streak"],
+        last_meal_logged_date=streak_state["last_meal_logged_date"]
     )
 
 def update_prediction(prediction_id: int,food_name: str,weight: float,session: Session,):

@@ -326,6 +326,31 @@ function SummaryPanel({ averageCalories, averageConfidence, highestCalorieMeal, 
     </Card>
   );
 }
+const formatLastLoggedRelative = (dateStr: string | null | undefined) => {
+  if (!dateStr) return 'Never';
+  try {
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+
+    const cleanDateStr = dateStr.includes('T') ? dateStr.split('T')[0] : dateStr.split(' ')[0];
+    const [year, month, day] = cleanDateStr.split('-').map(Number);
+    const logDate = new Date(year, month - 1, day);
+    logDate.setHours(0, 0, 0, 0);
+
+    const diffTime = today.getTime() - logDate.getTime();
+    const diffDays = Math.round(diffTime / (1000 * 60 * 60 * 24));
+
+    if (diffDays === 0) return 'Today';
+    if (diffDays === 1) return 'Yesterday';
+
+    const dayFormatted = String(day).padStart(2, '0');
+    const months = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+    const monthFormatted = months[month - 1];
+    return `${dayFormatted} ${monthFormatted} ${year}`;
+  } catch (e) {
+    return dateStr || 'Never';
+  }
+};
 
 export default function Dashboard() {
   const { user } = useAuth();
@@ -460,7 +485,7 @@ export default function Dashboard() {
       </div>
 
       {/* 2. Statistics Cards */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-6">
         <StatisticsCard
           icon={<Activity className="w-5 h-5" />}
           title="Total Scans"
@@ -485,7 +510,45 @@ export default function Dashboard() {
           value={analytics.statistics.highest_calorie_meal ? getFoodNameFromItem(analytics.statistics.highest_calorie_meal) : 'None'}
           subtitle={analytics.statistics.highest_calorie_meal ? `${analytics.statistics.highest_calorie_meal.calories} kcal` : '0 kcal'}
         />
+        <Card className="flex flex-col justify-between p-6 hover:scale-[1.01] hover:shadow-md transition-all duration-300 border border-slate-200/80 bg-white shadow-[0_1px_3px_rgba(0,0,0,0.01),0_10px_20px_-2px_rgba(0,0,0,0.02)]">
+          <div className="flex items-center justify-between">
+            <span className="text-xs font-semibold text-[#6B7280] uppercase tracking-wider">Daily Streak</span>
+            <div className="w-9 h-9 rounded-xl bg-orange-50 text-[#EA580C] flex items-center justify-center">
+              <Flame className="w-5 h-5 fill-current" />
+            </div>
+          </div>
+          <div className="mt-4 flex flex-col text-left">
+            <span className="text-2xl font-bold text-[#111827]">
+              {analytics.current_streak ?? 0} { (analytics.current_streak ?? 0) === 1 ? 'Day' : 'Days' }
+            </span>
+            <span className="text-xs text-[#6B7280] font-medium mt-1.5 leading-tight">Log one meal every day to grow your streak.</span>
+            
+            <div className="mt-3.5 pt-3.5 border-t border-slate-100 flex flex-col gap-1.5 text-[10px] font-bold text-slate-500">
+              <div className="flex justify-between items-center">
+                <span className="text-slate-400 font-semibold uppercase">Best Streak</span>
+                <span className="text-slate-700 font-extrabold">{analytics.longest_streak ?? 0} { (analytics.longest_streak ?? 0) === 1 ? 'Day' : 'Days' }</span>
+              </div>
+              <div className="flex justify-between items-center">
+                <span className="text-slate-400 font-semibold uppercase">Last Logged</span>
+                <span className="text-slate-700 font-extrabold">{formatLastLoggedRelative(analytics.last_meal_logged_date)}</span>
+              </div>
+            </div>
+          </div>
+        </Card>
       </div>
+
+      {/* Streak Ended Banner */}
+      { (analytics.current_streak ?? 0) === 0 && analytics.last_meal_logged_date && (
+        <div className="flex items-center gap-3 bg-amber-50/70 border border-amber-200/80 rounded-2xl p-4 text-left animate-fade-in -mt-2">
+          <div className="w-9 h-9 rounded-xl bg-amber-100/80 text-amber-700 flex items-center justify-center flex-shrink-0">
+            <Flame className="w-5 h-5 fill-current" />
+          </div>
+          <div className="flex flex-col">
+            <span className="text-sm font-semibold text-amber-900">Your streak has ended.</span>
+            <span className="text-xs text-amber-700 font-medium mt-0.5">Log a meal today to start a new one.</span>
+          </div>
+        </div>
+      )}
 
       {/* 3 & 4. Charts Layout */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">

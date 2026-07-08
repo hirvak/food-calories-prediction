@@ -13,6 +13,7 @@ from Reports.schema import AdminReportData
 from Reports._excel_common import (
     write_title, write_header_row, write_data_rows, auto_size_columns, LABEL_FONT,
 )
+from Reports.utils import format_food_name
 
 PREDICTION_HEADERS = [
     "Date", "User Name", "Email", "Food", "Weight (g)",
@@ -44,7 +45,7 @@ def _build_predictions_sheet(sheet, data: AdminReportData):
             row.prediction.created_at.strftime("%d-%m-%Y %H:%M"),
             row.user_name,
             row.user_email,
-            row.prediction.food_name,
+            format_food_name(row.prediction.food_name),
             row.prediction.weight_grams,
             row.prediction.calories,
             row.prediction.protein,
@@ -63,7 +64,7 @@ def _build_predictions_sheet(sheet, data: AdminReportData):
 def _build_top_foods_sheet(sheet, data: AdminReportData):
     write_title(sheet, "Top Foods")
     write_header_row(sheet, row_index=3, headers=["Food", "Frequency"])
-    write_data_rows(sheet, start_row=4, rows=[[f.food_name, f.count] for f in data.top_foods])
+    write_data_rows(sheet, start_row=4, rows=[[format_food_name(f.food_name), f.count] for f in data.top_foods])
     auto_size_columns(sheet)
 
 

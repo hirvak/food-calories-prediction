@@ -17,6 +17,7 @@ from Reports._pdf_common import (
     PRIMARY_BLUE, LIGHT_BG, BORDER_COLOR, DARK_TEXT, MUTED_TEXT, WHITE,
     get_logo_drawing,
 )
+from Reports.utils import format_food_name
 
 def _header_section(data: UserReportData):
     logo = get_logo_drawing(30)
@@ -121,7 +122,7 @@ def _summary_cards_section(data: UserReportData, styles):
     c1 = make_cell("Meals Logged", str(total_meals))
     c2 = make_cell("Total Calories", f"{int(total_calories)}", "kcal")
     c3 = make_cell("Avg Calories", f"{int(avg_calories)}", "kcal")
-    c4 = make_cell("Most Consumed", most_consumed.capitalize())
+    c4 = make_cell("Most Consumed", format_food_name(most_consumed))
 
     spacer_width = 0.2 * cm
     summary_table = Table(
@@ -159,7 +160,7 @@ def _history_table(data: UserReportData, limit: int = 15):
     rows = [
         [
             p.created_at.strftime("%Y-%m-%d"),
-            p.food_name.capitalize(),
+            format_food_name(p.food_name),
             f"{p.weight_grams} g",
             f"{p.calories:.0f} kcal",
             f"{p.protein:.1f} g",
@@ -179,7 +180,7 @@ def _top_foods_table(data: UserReportData):
     if not data.top_foods:
         return [Paragraph("No top scanned foods recorded.", ParagraphStyle('NoData', fontName='Helvetica', fontSize=9, textColor=MUTED_TEXT))]
     
-    rows = [[food.food_name.capitalize(), str(food.count)] for food in data.top_foods[:5]]
+    rows = [[format_food_name(food.food_name), str(food.count)] for food in data.top_foods[:5]]
     return [styled_table(["Food Name", "Times Scanned"], rows, col_widths=[12.0 * cm, 6.0 * cm])]
 
 

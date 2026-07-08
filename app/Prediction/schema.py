@@ -11,6 +11,10 @@ class PredictionUpdate(BaseModel):
     food_name: str
     weight: float = Field(gt=0, description="Weight in grams")
 
+class ManualPredictionCreate(BaseModel):
+    food_id: int
+    weight_grams: float = Field(gt=0, le=5000, description="Weight in grams")
+
 # ---------------- Weekly Trend ----------------
 
 class WeeklyTrend(BaseModel):
@@ -50,7 +54,7 @@ class RecentActivity(BaseModel):
     time: str
 
 
-# ---------------- Dashboard Response ----------------
+from datetime import date
 
 class DashboardAnalyticsResponse(BaseModel):
     weekly_trend: List[WeeklyTrend]
@@ -58,3 +62,6 @@ class DashboardAnalyticsResponse(BaseModel):
     statistics: DashboardStatistics
     recent_activity: List[RecentActivity]
     top_foods: list
+    current_streak: int
+    longest_streak: int
+    last_meal_logged_date: date | None

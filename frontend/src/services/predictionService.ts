@@ -10,6 +10,7 @@ import type {
   AdminDashboardStats,
   DashboardAnalyticsResponse,
   Prediction,
+  FoodSearchItem,
 } from '../types';
 
 export const predictionService = {
@@ -22,6 +23,21 @@ export const predictionService = {
       headers: {
         'Content-Type': 'multipart/form-data',
       },
+    });
+    return response.data;
+  },
+
+  async searchFoods(query: string): Promise<FoodSearchItem[]> {
+    const response = await api.get('/nutrition/search', {
+      params: { query },
+    });
+    return response.data;
+  },
+
+  async saveManualMeal(foodId: number, weightGrams: number): Promise<PredictFoodResult> {
+    const response = await api.post('/prediction/manual', {
+      food_id: foodId,
+      weight_grams: weightGrams,
     });
     return response.data;
   },

@@ -5,18 +5,87 @@ from sqlmodel import Session
 from fastapi import Depends
 from Utils.utils import get_session
 from Security.security import get_current_user
-from Prediction.models import Prediction
+from Prediction.models import Prediction, PredictionSource
+from Nutrition.models import Nutrition
 from fastapi import HTTPException
 from Prediction.controller import get_user_predictions,get_all_predictions,save_prediction,get_today_predictions,get_weekly_predictions,get_monthly_predictions,get_top_foods,delete_prediction,get_user_predictions_paginated,get_all_predictions_paginated,get_dashboard_analytics,update_prediction
 from fastapi import HTTPException
 from Nutrition.nutrition_coach import generate_nutrition_coach
 from Nutrition.healthy_alternatives import get_healthy_alternatives
 from PIL import Image
-from Prediction.schema import PredictionUpdate
+from Prediction.schema import PredictionUpdate, ManualPredictionCreate
 router = APIRouter(
     prefix="/prediction",
     tags=["Prediction"]
 )
+
+@router.post("/manual")
+def add_manual_meal(data: ManualPredictionCreate, session: Session = Depends(get_session), current_user = Depends(get_current_user)):
+    # 1. Fetch food item from nutrition database
+    nutrition = session.get(Nutrition, data.food_id)
+    if not nutrition:
+        raise HTTPException(status_code=404, detail="Food item no longer exists in database")
+        
+    weight = data.weight_grams
+    
+    # 2. Calculate nutrition values
+    calories = (nutrition.calories_per_100g * weight) / 100
+    protein = (nutrition.protein * weight) / 100
+    fat = (nutrition.fat * weight) / 100
+    carbohydrates = (nutrition.carbohydrates * weight) / 100
+    fiber = (nutrition.fiber * weight) / 100
+    sugar = (nutrition.sugar * weight) / 100
+
+    # Generate nutrition coach recommendations
+    nutrition_coach = generate_nutrition_coach(
+        calories=round(calories, 2),
+        protein=round(protein, 2),
+        fat=round(fat, 2),
+        carbohydrates=round(carbohydrates, 2),
+        fiber=round(fiber, 2),
+        sugar=round(sugar, 2),
+    )
+
+    healthy_alternatives = get_healthy_alternatives(nutrition.food_name)
+
+    # 3. Create Prediction entry
+    prediction = Prediction(
+        user_id=current_user.id,
+        food_name=nutrition.food_name,
+        weight_grams=weight,
+        calories=round(calories, 2),
+        protein=round(protein, 2),
+        fat=round(fat, 2),
+        carbohydrates=round(carbohydrates, 2),
+        fiber=round(fiber, 2),
+        sugar=round(sugar, 2),
+        confidence=1.0,
+        image_path=None,
+        prediction_source=PredictionSource.MANUAL,
+        nutrition_id=nutrition.id
+    )
+
+    # 4. Save and return response matching image scan schema
+    prediction, streak_updated_today = save_prediction(prediction, session)
+    return {
+        "id": prediction.id,
+        "food_name": prediction.food_name,
+        "confidence": 1.0,
+        "weight": weight,
+        "nutrition": {
+            "calories": prediction.calories,
+            "protein": prediction.protein,
+            "fat": prediction.fat,
+            "carbohydrates": prediction.carbohydrates,
+            "fiber": prediction.fiber,
+            "sugar": prediction.sugar,
+        },
+        "nutrition_coach": nutrition_coach,
+        "healthy_alternatives": healthy_alternatives,
+        "streak_updated_today": streak_updated_today,
+        "prediction_source": prediction.prediction_source,
+        "nutrition_id": prediction.nutrition_id
+    }
 
 @router.post("/predict")
 async def predict_food(image: UploadFile = File(...),weight: float = Form(...),session: Session = Depends(get_session),current_user = Depends(get_current_user)):
@@ -59,7 +128,7 @@ async def predict_food(image: UploadFile = File(...),weight: float = Form(...),s
         confidence=round(confidence, 2),
         image_path=None)
 
-    save_prediction(prediction,session)
+    prediction, streak_updated_today = save_prediction(prediction,session)
     return {
         "food_name": food_name,
         "confidence": round(confidence, 2),
@@ -74,6 +143,7 @@ async def predict_food(image: UploadFile = File(...),weight: float = Form(...),s
         },
         "nutrition_coach": nutrition_coach,
         "healthy_alternatives": healthy_alternatives,
+        "streak_updated_today": streak_updated_today
     }
 
 @router.get("/history")

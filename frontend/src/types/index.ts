@@ -28,6 +28,9 @@ export interface UserProfileStats {
   member_since: string;
   total_predictions: number;
   total_calories_consumed: number;
+  current_streak?: number;
+  longest_streak?: number;
+  last_meal_logged_date?: string | null;
 }
 
 export interface UserListResponse {
@@ -51,7 +54,20 @@ export interface Prediction {
   sugar: number;
   confidence: number;
   image_path: string | null;
+  prediction_source?: 'IMAGE' | 'MANUAL' | 'BARCODE' | string;
+  nutrition_id?: number | null;
   created_at: string;
+}
+
+export interface FoodSearchItem {
+  id: number;
+  food_name: string;
+  calories_per_100g: number;
+  protein: number;
+  fat: number;
+  carbohydrates: number;
+  fiber: number;
+  sugar: number;
 }
 
 export interface PredictionHistoryResponse {
@@ -93,6 +109,7 @@ export interface PredictFoodResult {
     hydration_tip: string;
   };
   healthy_alternatives?: string[];
+  streak_updated_today?: boolean;
 }
 
 export interface TodayNutritionSummary {
@@ -165,6 +182,9 @@ export interface DashboardAnalyticsResponse {
     food_name: string;
     count: number;
   }[];
+  current_streak: number;
+  longest_streak: number;
+  last_meal_logged_date: string | null;
 }
 
 export interface BMICalculatorRequest {

@@ -236,12 +236,23 @@ export default function PredictionHistory() {
                 }`}
               >
                 <div className="flex justify-between items-start">
-                  <div className="flex flex-col min-w-0">
-                    <span className="text-xs font-medium text-[#6B7280] tracking-wider flex items-center gap-1.5">
-                      <Clock className="w-3.5 h-3.5" /> 
-                      {new Date(item.created_at).toLocaleDateString()}
-                    </span>
-                    <h3 className="text-lg font-semibold text-[#111827] truncate mt-1">{getFoodNameFromItem(item)}</h3>
+                  <div className="flex flex-col gap-1 min-w-0">
+                    <div className="flex items-center gap-2 flex-wrap">
+                      <span className="text-xs font-medium text-[#6B7280] tracking-wider flex items-center gap-1.5">
+                        <Clock className="w-3.5 h-3.5" /> 
+                        {new Date(item.created_at).toLocaleDateString()}
+                      </span>
+                      {item.prediction_source === 'MANUAL' ? (
+                        <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[9px] font-bold bg-slate-100 text-slate-700 border border-slate-200">
+                          Manual Entry
+                        </span>
+                      ) : (
+                        <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[9px] font-bold bg-blue-50 text-blue-700 border border-blue-100">
+                          Image Scan
+                        </span>
+                      )}
+                    </div>
+                    <h3 className="text-lg font-semibold text-[#111827] truncate mt-0.5">{getFoodNameFromItem(item)}</h3>
                   </div>
                   
                   <div className="flex items-center gap-1">

@@ -10,6 +10,20 @@ import { Badge } from '../components/ui/Badge';
 import { Button } from '../components/ui/Button';
 import { PageHeader } from '../components/ui/PageHeader';
 
+const formatLastLoggedDate = (dateStr: string | null | undefined) => {
+  if (!dateStr) return 'Never';
+  try {
+    const cleanDateStr = dateStr.includes('T') ? dateStr.split('T')[0] : dateStr.split(' ')[0];
+    const [year, month, day] = cleanDateStr.split('-').map(Number);
+    const dayFormatted = String(day).padStart(2, '0');
+    const months = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+    const monthFormatted = months[month - 1];
+    return `${dayFormatted} ${monthFormatted} ${year}`;
+  } catch (e) {
+    return dateStr || 'Never';
+  }
+};
+
 export default function UserProfile() {
   const { showToast } = useToast();
   const navigate = useNavigate();
@@ -95,6 +109,30 @@ export default function UserProfile() {
               <span className="text-[10px] text-[#6B7280] uppercase tracking-wide">Joined</span>
               <span className="text-sm font-extrabold text-[#111827] truncate">
                 {profile?.member_since ? new Date(profile.member_since).toLocaleDateString() : 'N/A'}
+              </span>
+            </div>
+          </div>
+        </Card>
+
+        {/* Activity card */}
+        <Card className="flex flex-col gap-4 relative overflow-hidden p-6 text-left">
+          <div className="absolute top-0 inset-x-0 h-1.5 bg-emerald-600"></div>
+          <h4 className="text-xs font-bold text-slate-900 uppercase tracking-wider">Activity</h4>
+          <div className="w-full border-t border-slate-200"></div>
+          
+          <div className="flex flex-col gap-3.5 text-xs font-semibold text-slate-600">
+            <div className="flex justify-between items-center">
+              <span className="text-slate-400">Daily Streak</span>
+              <span className="text-slate-800 font-extrabold">{profile?.current_streak ?? 0} { (profile?.current_streak ?? 0) === 1 ? 'Day' : 'Days' }</span>
+            </div>
+            <div className="flex justify-between items-center">
+              <span className="text-slate-400">Best Streak</span>
+              <span className="text-slate-800 font-extrabold">{profile?.longest_streak ?? 0} { (profile?.longest_streak ?? 0) === 1 ? 'Day' : 'Days' }</span>
+            </div>
+            <div className="flex justify-between items-center">
+              <span className="text-slate-400">Last Meal Logged</span>
+              <span className="text-slate-800 font-extrabold">
+                {profile?.last_meal_logged_date ? formatLastLoggedDate(profile.last_meal_logged_date) : 'Never'}
               </span>
             </div>
           </div>

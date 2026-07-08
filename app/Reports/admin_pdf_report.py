@@ -16,6 +16,7 @@ from Reports._pdf_common import (
     PRIMARY_BLUE, LIGHT_BG, BORDER_COLOR, DARK_TEXT, MUTED_TEXT, WHITE,
     get_logo_drawing,
 )
+from Reports.utils import format_food_name
 
 def _header_section(data: AdminReportData):
     logo = get_logo_drawing(30)
@@ -79,7 +80,7 @@ def _top_foods_section(data: AdminReportData, styles):
     if not data.top_foods:
         elements.append(Paragraph("No meal scans recorded yet.", styles["Body"]))
         return elements
-    rows = [[food.food_name.capitalize(), str(food.count)] for food in data.top_foods[:10]]
+    rows = [[format_food_name(food.food_name), str(food.count)] for food in data.top_foods[:10]]
     elements.append(styled_table(["Food Name", "Times Scanned"], rows, col_widths=[12 * cm, 6 * cm]))
     elements.append(Spacer(1, 0.4 * cm))
     return elements
@@ -95,7 +96,7 @@ def _latest_predictions_section(data: AdminReportData, styles):
         [
             row.prediction.created_at.strftime("%Y-%m-%d %H:%M"),
             row.user_name,
-            row.prediction.food_name.capitalize(),
+            format_food_name(row.prediction.food_name),
             f"{row.prediction.calories:.0f} kcal",
         ]
         for row in data.latest_predictions

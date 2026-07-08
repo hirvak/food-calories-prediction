@@ -3,8 +3,8 @@ import { useForm } from 'react-hook-form';
 import { Link } from 'react-router-dom';
 import { predictionService } from '../services/predictionService';
 import { useToast } from '../context/ToastContext';
-import { getFoodNameFromItem } from '../utils/format';
-import type { PredictFoodResult, TodayNutritionSummary, Prediction } from '../types';
+import { getFoodNameFromItem, formatFoodName } from '../utils/format';
+import type { PredictFoodResult, TodayNutritionSummary, Prediction, FoodSearchItem } from '../types';
 import { 
   Upload, 
   Flame, 
@@ -41,6 +41,16 @@ export default function PredictFood() {
   const [todaySummary, setTodaySummary] = useState<TodayNutritionSummary | null>(null);
   const [recentPredictions, setRecentPredictions] = useState<Prediction[]>([]);
 
+  // Search Food specific states
+  const [activeTab, setActiveTab] = useState<'scan' | 'search'>('scan');
+  const [searchQuery, setSearchQuery] = useState('');
+  const [suggestions, setSuggestions] = useState<FoodSearchItem[]>([]);
+  const [selectedFood, setSelectedFood] = useState<FoodSearchItem | null>(null);
+  const [weightGrams, setWeightGrams] = useState<number>(100);
+  const [isSearching, setIsSearching] = useState(false);
+  const [isSavingManual, setIsSavingManual] = useState(false);
+  const [showSuggestions, setShowSuggestions] = useState(false);
+
   const {
     register,
     handleSubmit,
@@ -68,6 +78,95 @@ export default function PredictFood() {
     document.title = 'NutriLens | Meal Analysis';
     fetchSidebarData();
   }, [fetchSidebarData]);
+
+  // Debounced autocomplete search
+  useEffect(() => {
+    if (searchQuery.trim().length < 2) {
+      setSuggestions([]);
+      setIsSearching(false);
+      return;
+    }
+
+    // Don't search if query is already the exact name of selectedFood (raw or formatted)
+    if (selectedFood && (searchQuery === selectedFood.food_name || searchQuery === formatFoodName(selectedFood.food_name))) {
+      return;
+    }
+
+    const delayDebounce = setTimeout(async () => {
+      setIsSearching(true);
+      try {
+        const data = await predictionService.searchFoods(searchQuery);
+        setSuggestions(data);
+      } catch (err) {
+        console.error('Failed to search food:', err);
+      } finally {
+        setIsSearching(false);
+      }
+    }, 300);
+
+    return () => clearTimeout(delayDebounce);
+  }, [searchQuery, selectedFood]);
+
+  // Dynamic live calculation preview
+  useEffect(() => {
+    if (activeTab === 'search') {
+      if (selectedFood) {
+        const factor = weightGrams / 100;
+        const calculatedResult: PredictFoodResult = {
+          food_name: selectedFood.food_name,
+          confidence: 1.0,
+          weight: weightGrams,
+          nutrition: {
+            calories: Math.round(selectedFood.calories_per_100g * factor),
+            protein: Math.round((selectedFood.protein * factor) * 100) / 100,
+            fat: Math.round((selectedFood.fat * factor) * 100) / 100,
+            carbohydrates: Math.round((selectedFood.carbohydrates * factor) * 100) / 100,
+            fiber: Math.round((selectedFood.fiber * factor) * 100) / 100,
+            sugar: Math.round((selectedFood.sugar * factor) * 100) / 100,
+          }
+        };
+        setResult(calculatedResult);
+      } else {
+        setResult(null);
+      }
+    }
+  }, [selectedFood, weightGrams, activeTab]);
+
+  const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const val = e.target.value;
+    setSearchQuery(val);
+    setSelectedFood(null); // Clear selected food when typing new search
+    setShowSuggestions(true);
+  };
+
+  const handleSaveManualMeal = async () => {
+    if (!selectedFood) {
+      showToast('Please search and select a food first', 'warning');
+      return;
+    }
+    if (!weightGrams || weightGrams <= 0) {
+      showToast('Weight must be a positive number', 'warning');
+      return;
+    }
+    if (weightGrams > 5000) {
+      showToast('Weight cannot exceed 5000 grams', 'warning');
+      return;
+    }
+    
+    setIsSavingManual(true);
+    try {
+      const response = await predictionService.saveManualMeal(selectedFood.id, weightGrams);
+      setResult(response);
+      showToast('Meal logged successfully!', 'success');
+      fetchSidebarData();
+    } catch (err: any) {
+      console.error(err);
+      const errMsg = err.response?.data?.detail || 'Failed to save manual meal.';
+      showToast(errMsg, 'error');
+    } finally {
+      setIsSavingManual(false);
+    }
+  };
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -116,94 +215,284 @@ export default function PredictFood() {
       />
 
       <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-12 gap-6 items-start w-full">
-        {/* Left Column (Upload Card) */}
+        {/* Left Column (Upload / Search Card) */}
         <div className="md:col-span-1 xl:col-span-5 flex flex-col gap-6 w-full">
-          {/* Upload Card */}
-          <Card className="w-full text-left flex flex-col gap-6">
-          <div className="flex flex-col gap-1.5 text-left">
-            <h3 className="text-lg font-semibold text-[#111827]">Scan Meal</h3>
-            <p className="text-sm text-[#6B7280]">Upload an image of your food and provide the weight in grams.</p>
+          {/* Segmented Tab Control */}
+          <div className="flex bg-slate-100 p-1.5 rounded-2xl border border-slate-200 shadow-[inset_0_1px_2px_rgba(0,0,0,0.02)]">
+            <button
+              onClick={() => {
+                setActiveTab('scan');
+                setResult(null);
+              }}
+              className={`flex-1 flex items-center justify-center gap-2 py-2.5 rounded-xl text-xs font-bold transition-all duration-305 ${
+                activeTab === 'scan'
+                  ? 'bg-white text-blue-600 shadow-sm border border-slate-200/50'
+                  : 'text-slate-500 hover:text-slate-800'
+              }`}
+            >
+              <Camera className="w-4 h-4" />
+              Scan Food
+            </button>
+            <button
+              onClick={() => {
+                setActiveTab('search');
+                setResult(null);
+                setSearchQuery('');
+                setSelectedFood(null);
+              }}
+              className={`flex-1 flex items-center justify-center gap-2 py-2.5 rounded-xl text-xs font-bold transition-all duration-305 ${
+                activeTab === 'search'
+                  ? 'bg-white text-blue-650 shadow-sm border border-slate-200/50'
+                  : 'text-slate-500 hover:text-slate-800'
+              }`}
+            >
+              <Search className="w-4 h-4" />
+              Search Food
+            </button>
           </div>
 
-          <div className="border-t border-slate-200"></div>
-          
-          <form onSubmit={handleSubmit(onSubmit)} className="flex flex-col gap-6">
-            {/* Image selection Area */}
-            <div className="flex flex-col gap-2 text-left">
-              <label className="text-sm font-semibold text-[#111827]">Meal Photo</label>
-              <div className="group relative border-2 border-dashed border-slate-200 rounded-2xl hover:border-blue-500 hover:bg-blue-50/10 transition-all duration-300 bg-slate-50/40 overflow-hidden flex flex-col items-center justify-center p-6 min-h-[160px] mt-1">
-                <input
-                  type="file"
-                  accept="image/*"
-                  onChange={handleFileChange}
-                  className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10"
-                />
-                
-                {previewUrl ? (
-                  <div className="flex flex-col items-center justify-center w-full h-full gap-2">
-                    <img 
-                      src={previewUrl} 
-                      alt="Upload food preview" 
-                      className="max-h-32 rounded-xl object-cover shadow-sm transition-all duration-300 group-hover:scale-[1.03] group-hover:shadow-md"
+          {activeTab === 'scan' ? (
+            /* Upload Card */
+            <Card className="w-full text-left flex flex-col gap-6">
+              <div className="flex flex-col gap-1.5 text-left">
+                <h3 className="text-lg font-semibold text-[#111827]">Scan Meal</h3>
+                <p className="text-sm text-[#6B7280]">Upload an image of your food and provide the weight in grams.</p>
+              </div>
+
+              <div className="border-t border-slate-200"></div>
+              
+              <form onSubmit={handleSubmit(onSubmit)} className="flex flex-col gap-6">
+                {/* Image selection Area */}
+                <div className="flex flex-col gap-2 text-left">
+                  <label className="text-sm font-semibold text-[#111827]">Meal Photo</label>
+                  <div className="group relative border-2 border-dashed border-slate-200 rounded-2xl hover:border-blue-500 hover:bg-blue-50/10 transition-all duration-300 bg-slate-50/40 overflow-hidden flex flex-col items-center justify-center p-6 min-h-[160px] mt-1">
+                    <input
+                      type="file"
+                      accept="image/*"
+                      onChange={handleFileChange}
+                      className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10"
                     />
-                    <span className="text-xs text-[#6B7280] font-medium truncate max-w-[200px] mt-2 group-hover:text-blue-600 transition-colors">{selectedFile?.name}</span>
+                    
+                    {previewUrl ? (
+                      <div className="flex flex-col items-center justify-center w-full h-full gap-2">
+                        <img 
+                          src={previewUrl} 
+                          alt="Upload food preview" 
+                          className="max-h-32 rounded-xl object-cover shadow-sm transition-all duration-300 group-hover:scale-[1.03] group-hover:shadow-md"
+                        />
+                        <span className="text-xs text-[#6B7280] font-medium truncate max-w-[200px] mt-2 group-hover:text-blue-600 transition-colors">{selectedFile?.name}</span>
+                      </div>
+                    ) : (
+                      <div className="flex flex-col items-center gap-2 text-slate-400 py-3 text-center">
+                        <div className="w-10 h-10 rounded-xl bg-white border border-slate-200 flex items-center justify-center shadow-sm transition-all duration-300 group-hover:scale-105 group-hover:text-blue-600 group-hover:border-blue-200">
+                          <Upload className="w-4.5 h-4.5 text-[#6B7280] transition-colors group-hover:text-blue-600" />
+                        </div>
+                        <div>
+                          <span className="text-sm font-semibold text-blue-600 transition-colors">Select Food Photo</span>
+                          <span className="text-xs text-[#6B7280] block mt-1 font-medium">Supports PNG, JPG, JPEG</span>
+                        </div>
+                      </div>
+                    )}
                   </div>
+                </div>
+
+                {/* Weight Input */}
+                <div className="flex flex-col gap-2 text-left">
+                  <label className="text-sm font-semibold text-[#111827]" htmlFor="weight">Portion Weight (Grams)</label>
+                  <div className="relative mt-1">
+                    <input
+                      id="weight"
+                      type="number"
+                      step="any"
+                      placeholder="100"
+                      className={`w-full pl-4 pr-10 py-2.5 rounded-xl border text-sm font-medium text-[#111827] transition-all focus:outline-none focus:ring-2 focus:ring-blue-100 ${
+                        errors.weight 
+                          ? 'border-red-300 focus:ring-red-100 focus:border-red-400' 
+                          : 'border-slate-200 focus:border-blue-500'
+                      }`}
+                      {...register('weight', { 
+                        required: 'Weight is required',
+                        min: {
+                          value: 1,
+                          message: 'Weight must be at least 1 gram'
+                        }
+                      })}
+                    />
+                    <span className="absolute right-4 top-1/2 -translate-y-1/2 text-[10px] font-bold text-nutrigo-textSecondary">g</span>
+                  </div>
+                  {errors.weight && (
+                    <span className="text-[10px] font-bold text-red-500 mt-1">{errors.weight.message}</span>
+                  )}
+                </div>
+
+                {/* Button */}
+                <Button
+                  type="submit"
+                  size="lg"
+                  loading={isPredicting}
+                  loadingText="Analyzing..."
+                  className="w-full mt-4"
+                >
+                  Analyze Meal
+                </Button>
+              </form>
+            </Card>
+          ) : (
+            /* Search Database Card */
+            <Card className="w-full text-left flex flex-col gap-6 relative">
+              <div className="flex flex-col gap-1.5 text-left">
+                <h3 className="text-lg font-semibold text-[#111827]">Search Database</h3>
+                <p className="text-sm text-[#6B7280]">Find a food item in our nutrition database and set your portion size.</p>
+              </div>
+
+              <div className="border-t border-slate-200"></div>
+
+              <div className="flex flex-col gap-6">
+                {/* Autocomplete Search Input */}
+                <div className="flex flex-col gap-2 relative">
+                  <label className="text-sm font-semibold text-[#111827]">Food Name</label>
+                  <div className="relative mt-1">
+                    <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 w-4 h-4" />
+                    <input
+                      type="text"
+                      placeholder="Type at least 2 characters (e.g. apple, chicken)..."
+                      value={searchQuery}
+                      onChange={handleSearchChange}
+                      onFocus={() => setShowSuggestions(true)}
+                      className="w-full pl-10 pr-4 py-2.5 text-sm font-medium border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-100 focus:border-blue-500 bg-white transition-all duration-200 text-[#111827]"
+                    />
+                    {isSearching && (
+                      <Loader2 className="absolute right-3.5 top-1/2 -translate-y-1/2 text-blue-500 w-4 h-4 animate-spin" />
+                    )}
+                  </div>
+
+                  {/* Suggestions Dropdown overlay */}
+                  {showSuggestions && searchQuery.trim().length >= 2 && (
+                    <div className="absolute top-[calc(100%+4px)] inset-x-0 bg-white border border-slate-200 rounded-2xl shadow-lg z-30 max-h-60 overflow-y-auto divide-y divide-slate-100">
+                      {suggestions.length > 0 ? (
+                        suggestions.map((food) => (
+                          <button
+                            key={food.id}
+                            type="button"
+                            onClick={() => {
+                              setSelectedFood(food);
+                              setSearchQuery(formatFoodName(food.food_name));
+                              setShowSuggestions(false);
+                            }}
+                            className="w-full text-left px-4 py-3 hover:bg-slate-50 transition-colors flex justify-between items-center"
+                          >
+                            <span className="text-xs font-semibold text-slate-800">{formatFoodName(food.food_name)}</span>
+                            <span className="text-[10px] font-bold text-blue-600 bg-blue-50 border border-blue-100 px-2 py-0.5 rounded-lg">
+                              {food.calories_per_100g} kcal / 100g
+                            </span>
+                          </button>
+                        ))
+                      ) : (
+                        !isSearching && (
+                          <div className="p-4 text-center text-xs font-semibold text-slate-500">
+                            No food found matching "{searchQuery}"
+                          </div>
+                        )
+                      )}
+                    </div>
+                  )}
+                </div>
+
+                {selectedFood ? (
+                  <>
+                    {/* Nutrition per 100g baseline block */}
+                    <div className="bg-slate-50 border border-slate-200 rounded-2xl p-4.5 flex flex-col gap-3">
+                      <span className="text-[9px] uppercase font-bold text-slate-400 tracking-wider">Nutrition Baseline (Per 100g)</span>
+                      <div className="grid grid-cols-4 gap-2 text-center">
+                        <div className="flex flex-col gap-0.5 bg-white border border-slate-150 p-2 rounded-xl">
+                          <span className="text-[8px] font-bold text-slate-400 uppercase">Cals</span>
+                          <span className="text-xs font-extrabold text-slate-800">{selectedFood.calories_per_100g}</span>
+                        </div>
+                        <div className="flex flex-col gap-0.5 bg-white border border-slate-150 p-2 rounded-xl">
+                          <span className="text-[8px] font-bold text-slate-450 uppercase">Carb</span>
+                          <span className="text-xs font-extrabold text-blue-600">{selectedFood.carbohydrates}g</span>
+                        </div>
+                        <div className="flex flex-col gap-0.5 bg-white border border-slate-150 p-2 rounded-xl">
+                          <span className="text-[8px] font-bold text-slate-450 uppercase">Prot</span>
+                          <span className="text-xs font-extrabold text-red-500">{selectedFood.protein}g</span>
+                        </div>
+                        <div className="flex flex-col gap-0.5 bg-white border border-slate-150 p-2 rounded-xl">
+                          <span className="text-[8px] font-bold text-slate-450 uppercase">Fat</span>
+                          <span className="text-xs font-extrabold text-amber-500">{selectedFood.fat}g</span>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Weight Input */}
+                    <div className="flex flex-col gap-2">
+                      <label className="text-sm font-semibold text-[#111827]">Serving Weight (Grams)</label>
+                      <div className="relative mt-1">
+                        <input
+                          type="number"
+                          step="any"
+                          value={weightGrams}
+                          onChange={(e) => {
+                            const val = parseFloat(e.target.value);
+                            setWeightGrams(isNaN(val) ? 0 : val);
+                          }}
+                          className="w-full pl-4 pr-10 py-2.5 rounded-xl border border-slate-200 text-sm font-medium text-[#111827] focus:outline-none focus:ring-2 focus:ring-blue-100 focus:border-blue-500"
+                        />
+                        <span className="absolute right-4 top-1/2 -translate-y-1/2 text-[10px] font-bold text-slate-400">g</span>
+                      </div>
+                      {weightGrams <= 0 && (
+                        <span className="text-[10px] font-bold text-red-500 mt-1">Weight must be greater than 0</span>
+                      )}
+                      {weightGrams > 5000 && (
+                        <span className="text-[10px] font-bold text-red-500 mt-1">Weight cannot exceed 5000 grams</span>
+                      )}
+                    </div>
+
+                    {/* Live Preview Comparative Display */}
+                    <div className="bg-gradient-to-br from-blue-50/20 to-indigo-50/20 border border-blue-100 rounded-2xl p-4.5 flex flex-col gap-3">
+                      <span className="text-[9px] uppercase font-bold text-blue-600 tracking-wider">Your Serving Preview ({weightGrams}g)</span>
+                      <div className="grid grid-cols-4 gap-2 text-center text-[#111827]">
+                        <div className="flex flex-col gap-0.5">
+                          <span className="text-[8px] font-bold text-slate-400 uppercase">Calories</span>
+                          <span className="text-sm font-extrabold">{Math.round(selectedFood.calories_per_100g * (weightGrams / 100))}</span>
+                        </div>
+                        <div className="flex flex-col gap-0.5">
+                          <span className="text-[8px] font-bold text-slate-400 uppercase">Carb</span>
+                          <span className="text-sm font-extrabold text-blue-600">{Math.round((selectedFood.carbohydrates * (weightGrams / 100)) * 10) / 10}g</span>
+                        </div>
+                        <div className="flex flex-col gap-0.5">
+                          <span className="text-[8px] font-bold text-slate-400 uppercase">Protein</span>
+                          <span className="text-sm font-extrabold text-red-500">{Math.round((selectedFood.protein * (weightGrams / 100)) * 10) / 10}g</span>
+                        </div>
+                        <div className="flex flex-col gap-0.5">
+                          <span className="text-[8px] font-bold text-slate-400 uppercase">Fat</span>
+                          <span className="text-sm font-extrabold text-amber-500">{Math.round((selectedFood.fat * (weightGrams / 100)) * 10) / 10}g</span>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Save Meal Button */}
+                    <Button
+                      onClick={handleSaveManualMeal}
+                      size="lg"
+                      loading={isSavingManual}
+                      disabled={weightGrams <= 0 || weightGrams > 5000}
+                      className="w-full mt-2"
+                    >
+                      Save Meal
+                    </Button>
+                  </>
                 ) : (
-                  <div className="flex flex-col items-center gap-2 text-slate-400 py-3 text-center">
-                    <div className="w-10 h-10 rounded-xl bg-white border border-slate-200 flex items-center justify-center shadow-sm transition-all duration-300 group-hover:scale-105 group-hover:text-blue-600 group-hover:border-blue-200">
-                      <Upload className="w-4.5 h-4.5 text-[#6B7280] transition-colors group-hover:text-blue-600" />
-                    </div>
-                    <div>
-                      <span className="text-sm font-semibold text-blue-600 transition-colors">Select Food Photo</span>
-                      <span className="text-xs text-[#6B7280] block mt-1 font-medium">Supports PNG, JPG, JPEG</span>
-                    </div>
+                  <div className="flex flex-col items-center justify-center p-6 text-center text-slate-400 border border-dashed border-slate-200 rounded-2xl min-h-[160px]">
+                    <Search className="w-6 h-6 text-slate-300 animate-pulse" />
+                    <span className="text-xs font-semibold text-slate-500 mt-2">
+                      Search and select a food item to preview its nutrition.
+                    </span>
                   </div>
                 )}
               </div>
-            </div>
-
-            {/* Weight Input */}
-            <div className="flex flex-col gap-2 text-left">
-              <label className="text-sm font-semibold text-[#111827]" htmlFor="weight">Portion Weight (Grams)</label>
-              <div className="relative mt-1">
-                <input
-                  id="weight"
-                  type="number"
-                  step="any"
-                  placeholder="100"
-                  className={`w-full pl-4 pr-10 py-2.5 rounded-xl border text-sm font-medium text-[#111827] transition-all focus:outline-none focus:ring-2 focus:ring-blue-100 ${
-                    errors.weight 
-                      ? 'border-red-300 focus:ring-red-100 focus:border-red-400' 
-                      : 'border-slate-200 focus:border-blue-500'
-                  }`}
-                  {...register('weight', { 
-                    required: 'Weight is required',
-                    min: {
-                      value: 1,
-                      message: 'Weight must be at least 1 gram'
-                    }
-                  })}
-                />
-                <span className="absolute right-4 top-1/2 -translate-y-1/2 text-[10px] font-bold text-nutrigo-textSecondary">g</span>
-              </div>
-              {errors.weight && (
-                <span className="text-[10px] font-bold text-red-500 mt-1">{errors.weight.message}</span>
-              )}
-            </div>
-
-            {/* Button */}
-            <Button
-              type="submit"
-              size="lg"
-              loading={isPredicting}
-              loadingText="Analyzing..."
-              className="w-full mt-4"
-            >
-              Analyze Meal
-            </Button>
-          </form>
-        </Card>
-      </div>
+            </Card>
+          )}
+        </div>
 
       {/* Center Column (Prediction Results Card) */}
       <div className="md:col-span-1 xl:col-span-4 flex flex-col gap-6 w-full">
@@ -373,6 +662,36 @@ export default function PredictFood() {
 
             </div>
           )
+          ) : activeTab === 'search' ? (
+            /* Empty State for Search tab */
+            <Card className="flex flex-col gap-6 items-center text-center justify-center min-h-[400px]">
+              <div className="w-16 h-16 rounded-2xl bg-blue-50 border border-blue-100 flex items-center justify-center shadow-sm relative group hover:scale-105 transition-all duration-300">
+                <Search className="w-7 h-7 text-blue-600 transition-transform group-hover:scale-105 duration-300" />
+                <Sparkles className="w-4.5 h-4.5 text-blue-500 absolute -top-1 -right-1 animate-pulse" />
+              </div>
+              
+              <div className="flex flex-col gap-1.5 max-w-sm">
+                <h3 className="text-lg font-semibold text-[#111827]">Search and select a food</h3>
+                <p className="text-sm text-[#6B7280] leading-relaxed mt-1">
+                  Search and select a food item to preview its nutrition.
+                </p>
+              </div>
+
+              <div className="flex flex-col gap-3 w-full max-w-xs mt-3 text-xs font-semibold text-[#4B5563] bg-slate-50/50 p-4.5 rounded-2xl border border-slate-200 text-left">
+                <div className="flex items-center gap-3">
+                  <span className="w-5 h-5 rounded-full bg-blue-50 text-blue-600 flex items-center justify-center text-xs flex-shrink-0 font-bold">1</span>
+                  <span className="text-left">Type a keyword to find your food in our database.</span>
+                </div>
+                <div className="flex items-center gap-3">
+                  <span className="w-5 h-5 rounded-full bg-blue-50 text-blue-600 flex items-center justify-center text-xs flex-shrink-0 font-bold">2</span>
+                  <span className="text-left">Select the correct item from suggestions.</span>
+                </div>
+                <div className="flex items-center gap-3">
+                  <span className="w-5 h-5 rounded-full bg-blue-50 text-blue-600 flex items-center justify-center text-xs flex-shrink-0 font-bold">3</span>
+                  <span className="text-left">Adjust serving weight to preview macros live!</span>
+                </div>
+              </div>
+            </Card>
           ) : (
             /* Empty State Snapshot */
             <Card className="flex flex-col gap-6 items-center text-center justify-center min-h-[400px]">
@@ -388,7 +707,7 @@ export default function PredictFood() {
                 </p>
               </div>
 
-              <div className="flex flex-col gap-3 w-full max-w-xs mt-3 text-xs font-semibold text-[#4B5563] bg-slate-50/50 p-4.5 rounded-2xl border border-slate-200">
+              <div className="flex flex-col gap-3 w-full max-w-xs mt-3 text-xs font-semibold text-[#4B5563] bg-slate-50/50 p-4.5 rounded-2xl border border-slate-200 text-left">
                 <div className="flex items-center gap-3">
                   <span className="w-5 h-5 rounded-full bg-blue-50 text-blue-600 flex items-center justify-center text-xs flex-shrink-0 font-bold">1</span>
                   <span className="text-left">Select a food snapshot from your camera or files.</span>

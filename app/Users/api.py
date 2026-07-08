@@ -23,7 +23,9 @@ def admin_dashboard(session: Session = Depends(get_session),current_user = Depen
 @router.get("/profile")
 def get_profile(session: Session = Depends(get_session),current_user = Depends(get_current_user)):
 
+    from Users.services.streak_service import get_active_streak_state
     stats = get_user_profile_stats(current_user.id,session)
+    streak_state = get_active_streak_state(current_user)
     return {
         "id": current_user.id,
         "name": current_user.name,
@@ -32,7 +34,10 @@ def get_profile(session: Session = Depends(get_session),current_user = Depends(g
         "is_active": current_user.is_active,
         "member_since": current_user.created_at,
         "total_predictions": stats["total_predictions"],
-        "total_calories_consumed": stats["total_calories_consumed"]
+        "total_calories_consumed": stats["total_calories_consumed"],
+        "current_streak": streak_state["current_streak"],
+        "longest_streak": streak_state["longest_streak"],
+        "last_meal_logged_date": streak_state["last_meal_logged_date"]
     }
 
 @router.patch("/update-profile")
